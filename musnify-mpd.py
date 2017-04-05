@@ -13,21 +13,18 @@ gi.require_version('Notify', '0.7')
 from gi.repository import Notify
 from mpd import MPDClient
 
-global musicLibrary, host, port
-
 configFile = os.path.expanduser("~/.config/musnify-mpd/musnify-mpd.config")
 
 if not os.path.isfile(configFile):
     print "Loading default config"
-    host = "localhost"
-    port = "6600"
-    musicLibrary = os.path.expanduser("~/Music/")
-else:
-    config = ConfigParser.ConfigParser()
-    config.read(configFile)
-    host = config.get("mpd","host")
-    port = config.get("mpd","port")
-    musicLibrary = os.path.expanduser(config.get("mpd","musiclibrary")) + "/"
+    configFile = "/etc/musnify-mpd.config"
+
+config = ConfigParser.ConfigParser()
+config.read(configFile)
+
+host = config.get("mpd","host")
+port = config.get("mpd","port")
+musicLibrary = os.path.expanduser(config.get("mpd","musiclibrary")) + "/"
 
 class MPDWrapper:
     def __init__(self, host="localhost", port="6600"):
@@ -53,6 +50,9 @@ class MPDWrapper:
             title = song["title"]
         except KeyError:
             song["title"] = song["file"].split("/")[-1]
+
+        if debug:
+            print song
 
         return song
 
@@ -167,6 +167,8 @@ for i in range(len(sys.argv)):
         host = sys.argv[i + 1]
     if sys.argv[i] == "-p":
         port = sys.argv[i + 1]
+    if sys.argv[i] == "-d":
+        debug = True
 
 musnify = Musnify()
 

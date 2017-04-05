@@ -1,4 +1,4 @@
 # [mpd]
 # host = localhost
 # port = 6600
-# password =
+# musiclibrary = ~/Music
