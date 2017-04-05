@@ -5,6 +5,6 @@ rm /usr/bin/musnify-mpd
 
 echo 'removing config files'
 rm /etc/musnify-mpd.config
-rm -r /etc/usr/share/doc/musnify-mpd
+rm -r /usr/share/doc/musnify-mpd
 
 echo 'done.'
