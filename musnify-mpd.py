@@ -81,7 +81,7 @@ class CoverArt:
     @staticmethod
     def fetchAlbumCoverURL(artist, album, size=1):
         apiUrl = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo'
-        apiKey = "3915759326476a5f23963c3782fa3b98"
+        apiKey = "YOUR_LAST_FM_API_KEY"
 
         apiReqUrl = apiUrl + '&artist=' + artist + '&album=' + album + '&api_key=' + apiKey + '&format=json'
         r = requests.get(apiReqUrl)
@@ -102,7 +102,6 @@ class CoverArt:
         response = requests.get(url, stream=True)
         with open(path, "wb") as fileOutput:
             fileOutput.write(response.raw.read())
-
 
 class Musnify(object):
     def __init__(self):
