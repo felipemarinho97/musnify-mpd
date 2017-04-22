@@ -109,15 +109,6 @@ class CoverArt:
                 return False
             return url
 
-    # @staticmethod
-    # def downloadAlbumCover(url, path):
-    #     ## DEPRECATED METHOD ##
-    #     if debug:
-    #         print("downloading album cover from " + url)
-    #     response = requests.get(url, stream=True)
-    #     with open(path, "wb") as fileOutput:
-    #         fileOutput.write(response.raw.read())
-
     @staticmethod
     def downloadPixbufAlbumCover(url):
         if debug:
