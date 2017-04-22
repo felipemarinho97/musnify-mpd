@@ -2,3 +2,7 @@
 # host = localhost
 # port = 6600
 # musiclibrary = ~/Music
+#
+# [apiKey]
+# lastfm = YOUR_LASTFM_API_KEY
+#

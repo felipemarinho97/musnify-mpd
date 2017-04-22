@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import time
+import re
 
 import gi
 import requests
@@ -11,12 +12,14 @@ import requests
 gi.require_version('Notify', '0.7')
 
 from gi.repository import Notify
+from gi.repository.Gio import File
+from gi.repository.GdkPixbuf import Pixbuf
 from mpd import MPDClient
 
 configFile = os.path.expanduser("~/.config/musnify-mpd/musnify-mpd.config")
 
 if not os.path.isfile(configFile):
-    print "Loading default config"
+    print("Loading default config")
     configFile = "/etc/musnify-mpd.config"
 
 config = ConfigParser.ConfigParser()
@@ -24,7 +27,10 @@ config.read(configFile)
 
 host = config.get("mpd","host")
 port = config.get("mpd","port")
+apiKey = config.get("apiKey", "lastfm")
 musicLibrary = os.path.expanduser(config.get("mpd","musiclibrary")) + "/"
+
+debug = False
 
 class MPDWrapper:
     def __init__(self, host="localhost", port="6600"):
@@ -51,9 +57,6 @@ class MPDWrapper:
         except KeyError:
             song["title"] = song["file"].split("/")[-1]
 
-        if debug:
-            print song
-
         return song
 
     def getStatus(self):
@@ -65,15 +68,21 @@ class NotificationWrapper:
         Notify.init("musnify-mpd")
         self.notification = Notify.Notification.new("Initializing Musnify..")
 
-    def notify(self, artist, album, title, coverPath):
-        self.notification.update(title, "by " + artist + "\n" + album, coverPath)
+    def notify(self, artist, album, title, cover):
+        self.notification.clear_hints()
+        if cover == None:
+            self.notification.update(title, ("by " + artist + "\n" + album).replace("&", "&amp;"), "music")
+        else:
+            self.notification.update(title, ("by " + artist + "\n" + album).replace("&","&amp;"))
+            self.notification.set_image_from_pixbuf(cover)
         self.notification.show()
 
     def notifyStatus(self, status):
+        self.notification.clear_hints()
         if status == "pause":
-            self.notification.update("MPD Paused")
+            self.notification.update("MPD Paused",icon="music")
         elif status == "stop":
-            self.notification.update("MPD Stopped")
+            self.notification.update("MPD Stopped",icon="music")
         self.notification.show()
 
 
@@ -81,7 +90,6 @@ class CoverArt:
     @staticmethod
     def fetchAlbumCoverURL(artist, album, size=1):
         apiUrl = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo'
-        apiKey = "YOUR_LAST_FM_API_KEY"
 
         apiReqUrl = apiUrl + '&artist=' + artist + '&album=' + album + '&api_key=' + apiKey + '&format=json'
         r = requests.get(apiReqUrl)
@@ -90,18 +98,49 @@ class CoverArt:
 
         try:
             assert dataInfo["error"] > 0
+            if debug:
+                print("Nothing found on last fm")
             return False
         except:
             url = dataInfo["album"]["image"][size]["#text"]
             if url == "":
+                if debug:
+                    print("Nothing found on last fm")
                 return False
             return url
 
+    # @staticmethod
+    # def downloadAlbumCover(url, path):
+    #     ## DEPRECATED METHOD ##
+    #     if debug:
+    #         print("downloading album cover from " + url)
+    #     response = requests.get(url, stream=True)
+    #     with open(path, "wb") as fileOutput:
+    #         fileOutput.write(response.raw.read())
+
     @staticmethod
-    def downloadAlbumCover(url, path):
-        response = requests.get(url, stream=True)
-        with open(path, "wb") as fileOutput:
-            fileOutput.write(response.raw.read())
+    def downloadPixbufAlbumCover(url):
+        if debug:
+            print("downloading album cover from " + url)
+
+        f = File.new_for_uri(url)
+        stream = f.read()
+
+        cover = Pixbuf.new_from_stream(stream)
+        stream.close()
+        return cover
+
+    @staticmethod
+    def fetchLocalCover(path):
+        regex = re.compile(r'(album|cover|\.?folder|front).*\.(gif|jpeg|jpg|png)$', re.I | re.X)
+        for e in os.listdir(path):
+            if regex.match(e) != None:
+                if debug:
+                    print("local cover found at " + path + e)
+                return Pixbuf.new_from_file(path + e)
+        if debug:
+            print("Nothing found on local directory")
+        return False
 
 class Musnify(object):
     def __init__(self):
@@ -131,9 +170,11 @@ class Musnify(object):
             if song != actualSong:
                 song = mpd.getCurrentSong()
                 self.handle(song)
+                if debug:
+                    print(song)
 
     def handle(self, song):
-        localCoverPath = musicLibrary + self._separa(song["file"]) + "Folder.jpg"
+        localCoverPath = CoverArt.fetchLocalCover(musicLibrary + self._separa(song["file"]))
 
         artist = song["artist"]
         album = song["album"]
@@ -142,11 +183,11 @@ class Musnify(object):
         coverUrl = CoverArt.fetchAlbumCoverURL(artist, album)
 
         if coverUrl != False:
-            CoverArt.downloadAlbumCover(coverUrl, self.lastfmCoverPath)
-            path = self.lastfmCoverPath
-        else:
+            path = CoverArt.downloadPixbufAlbumCover(coverUrl)
+        elif localCoverPath != False:
             path = localCoverPath
-
+        else:
+            path = None
         self.nw.notify(artist, album, title, path)
 
     @staticmethod
@@ -169,9 +210,10 @@ for i in range(len(sys.argv)):
     if sys.argv[i] == "-d":
         debug = True
 
-musnify = Musnify()
+if __name__ == "__main__":
+    musnify = Musnify()
 
-try:
-    musnify.start()
-finally:
-    musnify.stop()
+    try:
+        musnify.start()
+    finally:
+        musnify.stop()

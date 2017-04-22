@@ -1,13 +1,13 @@
 # Musnify-mpd
 **Musnify** is a simple script written in python that provides notification support for [Music Player Daemon](https://github.com/MaxKellermann/MPD) using _libnotify_0.7_.
-It can also display the album covers loaded from _last.fm_ in the notification status or (experimental) covers from the user music library.
+It can also display the album covers loaded from _last.fm_ in the notification status or load it from the user local music library.
 
-## Dependencies
+# Dependencies
 To use musnify-mpd you will need to install the following python dependencies:
 
     # pip2 install requests mpd
 
-## Installation
+# Installation
 
 To install musnify-mpd simple clone this repository into your machine:
 
@@ -15,7 +15,7 @@ To install musnify-mpd simple clone this repository into your machine:
 And so run the install.sh script inside the cloned directory.
     
     $ cd musnify-mpd   
-    $ ./install.sh
+    # ./install.sh
     
 ## Configuration
 
@@ -30,6 +30,12 @@ There is a sample conf:
     host = localhost
     port = 6600
     musiclibrary = ~/Music
+    [apiKey]
+    lastfm = YOUR_LASTFM_API_KEY
+    
+You always can just specify your MPD host and port:
+
+    $ musnify-mpd -h MPD_HOST -p MPD_PORT
 
 ## Use
 Just remember to run the script "musnify-mpd" every time you start your WM by putting 
