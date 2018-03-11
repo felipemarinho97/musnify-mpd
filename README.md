@@ -5,12 +5,12 @@
 **Musnify** is a simple script written in python that provides notification support for [Music Player Daemon](https://github.com/MaxKellermann/MPD) using _libnotify_0.7_.
 It can also display the album covers loaded from _last.fm_ in the notification status or load it from the user local music library.
 
-# Dependencies
+## Dependencies
 To use musnify-mpd you will need to install the following python dependencies:
 
     # pip2 install requests mpd
 
-# Installation
+## Installation
 
 To install musnify-mpd simple clone this repository into your machine:
 
@@ -19,6 +19,11 @@ And so run the install.sh script inside the cloned directory.
 
     $ cd musnify-mpd   
     # ./install.sh
+    
+#### Arch Linux
+If you are a Arch Linux user, you can also install it directly from [AUR](https://aur.archlinux.org/packages/musnify-mpd):
+
+    $ yaourt -S musnify-mpd
 
 ## Configuration
 
