@@ -55,7 +55,10 @@ class MPDWrapper:
         try:
             title = song["title"]
         except KeyError:
-            song["title"] = song["file"].split("/")[-1]
+            try:
+                song["title"] = song["file"].split("/")[-1]
+            except KeyError:
+                song["title"] = "Unknown Title"
 
         return song
 
@@ -158,7 +161,7 @@ class Musnify(object):
                 else:
                     self.nw.notifyStatus(status)
 
-            if song != actualSong:
+            if (song != actualSong) and status != "stop":
                 song = mpd.getCurrentSong()
                 self.handle(song)
                 if debug:
