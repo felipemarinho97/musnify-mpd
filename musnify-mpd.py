@@ -27,7 +27,8 @@ config.read(configFile)
 
 host = config.get("mpd","host")
 port = config.get("mpd","port")
-apiKey = config.get("apiKey", "lastfm")
+if config.has_option("apiKey", "lastfm"):
+    apiKey = config.get("apiKey", "lastfm")
 musicLibrary = os.path.expanduser(config.get("mpd","musiclibrary")) + "/"
 
 debug = False
@@ -93,6 +94,9 @@ class CoverArt:
     @staticmethod
     def fetchAlbumCoverURL(artist, album, size=1):
         apiUrl = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo'
+
+        if not 'apiKey' in globals():
+            return False
 
         apiReqUrl = apiUrl + '&artist=' + artist + '&album=' + album + '&api_key=' + apiKey + '&format=json'
         r = requests.get(apiReqUrl)
@@ -195,6 +199,13 @@ class Musnify(object):
     def stop(self):
         Notify.uninit()
 
+def help():
+    print("""musnify-mpd\n\nOptions:
+  --help\tShow this help and exit
+  -h\t\tSpecify your MPD host (default: localhost)
+  -p\t\tSpecify your MPD port (default: 6600)
+  -d\t\tRun with debug mode enabled
+         """)
 
 for i in range(len(sys.argv)):
     if sys.argv[i] == "-h":
@@ -203,6 +214,9 @@ for i in range(len(sys.argv)):
         port = sys.argv[i + 1]
     if sys.argv[i] == "-d":
         debug = True
+    if sys.argv[i] == "--help":
+        help()
+        exit()
 
 if __name__ == "__main__":
     musnify = Musnify()
