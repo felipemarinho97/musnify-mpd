@@ -1,4 +1,10 @@
 # Musnify-mpd
+![AUR](http://badge.kloud51.com/aur/s/musnify-mpd.svg)
+![AUR](https://img.shields.io/aur/version/musnify-mpd.svg)
+![AUR](https://img.shields.io/aur/votes/musnify-mpd.svg)
+![AUR](http://badge.kloud51.com/aur/p/musnify-mpd.svg)
+![AUR](http://badge.kloud51.com/aur/m/musnify-mpd.svg)
+![AUR](https://img.shields.io/aur/license/musnify-mpd.svg)
 
 ![](screenshot.png)
 
