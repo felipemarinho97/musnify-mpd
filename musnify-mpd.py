@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 # coding: utf-8
 import ConfigParser
 import json
@@ -60,6 +61,13 @@ class MPDWrapper:
                 song["title"] = song["file"].split("/")[-1]
             except KeyError:
                 song["title"] = "Unknown Title"
+        try:
+        		track = song["track"]
+        except KeyError:
+        		try:
+        				song["track"] = song["track"]
+        		except KeyError:
+        				song["track"] = "00"
 
         return song
 
@@ -72,12 +80,12 @@ class NotificationWrapper:
         Notify.init("musnify-mpd")
         self.notification = Notify.Notification.new("Initializing Musnify..")
 
-    def notify(self, artist, album, title, cover):
+    def notify(self, artist, album, title, track, cover):
         self.notification.clear_hints()
         if cover == None:
-            self.notification.update(title, ("by " + artist + "\n" + album).replace("&", "&amp;"), "music")
+            self.notification.update(track + ". " + title, (artist + "\n" + "[" + album + "]").replace("&", "&amp;"), "music")
         else:
-            self.notification.update(title, ("by " + artist + "\n" + album).replace("&","&amp;"))
+            self.notification.update(track + ". " + title, (artist + "\n" + "[" + album + "]").replace("&","&amp;"))
             self.notification.set_image_from_pixbuf(cover)
         self.notification.show()
 
@@ -135,7 +143,7 @@ class CoverArt:
             if regex.match(e) != None:
                 if debug:
                     print("local cover found at " + path + e)
-                return Pixbuf.new_from_file(path + e)
+                return Pixbuf.new_from_file_at_scale(path + e, 256, 256, "TRUE")
         if debug:
             print("Nothing found on local directory")
         return False
@@ -172,11 +180,12 @@ class Musnify(object):
                     print(song)
 
     def handle(self, song):
-        localCoverPath = CoverArt.fetchLocalCover(musicLibrary + self._separa(song["file"]))
-
+#        localCoverPath = CoverArt.fetchLocalCover(musicLibrary + self._separa(song["file"]))
+        localCoverPath = CoverArt.fetchLocalCover(self._separa(song["file"]))
         artist = song["artist"]
         album = song["album"]
         title = song["title"]
+        track = song["track"]
 
         coverUrl = CoverArt.fetchAlbumCoverURL(artist, album)
 
@@ -186,7 +195,7 @@ class Musnify(object):
             path = localCoverPath
         else:
             path = None
-        self.nw.notify(artist, album, title, path)
+        self.nw.notify(artist, album, title, track, path)
 
     @staticmethod
     def _separa(url):
