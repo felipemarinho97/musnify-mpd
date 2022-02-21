@@ -1,5 +1,8 @@
 # coding: utf-8
-import ConfigParser
+try:
+    from ConfigParser import ConfigParser
+except ImportError:
+    from configparser import ConfigParser
 import json
 import os
 import sys
@@ -22,7 +25,7 @@ if not os.path.isfile(configFile):
     print("Loading default config")
     configFile = "/etc/musnify-mpd.config"
 
-config = ConfigParser.ConfigParser()
+config = ConfigParser()
 config.read(configFile)
 
 host = config.get("mpd","host")
