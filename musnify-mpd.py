@@ -68,6 +68,9 @@ class MPDWrapper:
 
     def getStatus(self):
         return self.client.status()["state"]
+    
+    def waitForChange(self):
+        return self.client.idle("player")
 
 
 class NotificationWrapper:
@@ -158,7 +161,6 @@ class Musnify(object):
         song = ""
 
         while True:
-            time.sleep(0.5)
             actualStatus = mpd.getStatus()
             actualSong = mpd.getCurrentSong()
 
@@ -176,6 +178,8 @@ class Musnify(object):
                 self.handle(song)
                 if debug:
                     print(song)
+            
+            mpd.waitForChange()
 
     def handle(self, song):
         localCoverPath = CoverArt.fetchLocalCover(musicLibrary + self._separa(song["file"]))
