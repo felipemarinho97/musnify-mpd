@@ -28,11 +28,11 @@ if not os.path.isfile(configFile):
 config = ConfigParser()
 config.read(configFile)
 
-host = config.get("mpd","host")
-port = config.get("mpd","port")
+host = config.get("mpd","host", fallback=os.environ.get("MPD_HOST", "localhost"))
+port = config.get("mpd","port", fallback=os.environ.get("MPD_PORT", 6600))
 if config.has_option("apiKey", "lastfm"):
     apiKey = config.get("apiKey", "lastfm")
-musicLibrary = os.path.expanduser(config.get("mpd","musiclibrary")) + "/"
+musicLibrary = os.path.expanduser(config.get("mpd","musiclibrary", fallback='~/Music')) + "/"
 
 debug = False
 
