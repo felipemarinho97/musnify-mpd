@@ -134,11 +134,14 @@ class CoverArt:
     @staticmethod
     def fetchLocalCover(path):
         regex = re.compile(r'(album|cover|\.?folder|front).*\.(gif|jpeg|jpg|png)$', re.I | re.X)
-        for e in os.listdir(path):
-            if regex.match(e) != None:
-                if debug:
-                    print("local cover found at " + path + e)
-                return Pixbuf.new_from_file(path + e)
+        try:
+            for e in os.listdir(path):
+                if regex.match(e) != None:
+                    if debug:
+                        print("local cover found at " + path + e)
+                    return Pixbuf.new_from_file(path + e)
+        except:
+            pass
         if debug:
             print("Nothing found on local directory")
         return False
@@ -210,21 +213,23 @@ def help():
   -d\t\tRun with debug mode enabled
          """)
 
-for i in range(len(sys.argv)):
-    if sys.argv[i] == "-h":
-        host = sys.argv[i + 1]
-    if sys.argv[i] == "-p":
-        port = sys.argv[i + 1]
-    if sys.argv[i] == "-d":
-        debug = True
-    if sys.argv[i] == "--help":
-        help()
-        exit()
-
 if __name__ == "__main__":
+    for i in range(len(sys.argv)):
+        if sys.argv[i] == "-h":
+            host = sys.argv[i + 1]
+        if sys.argv[i] == "-p":
+            port = sys.argv[i + 1]
+        if sys.argv[i] == "-d":
+            debug = True
+        if sys.argv[i] == "--help":
+            help()
+            exit()
+    
     musnify = Musnify()
 
     try:
         musnify.start()
+    except KeyboardInterrupt:
+        pass
     finally:
         musnify.stop()
