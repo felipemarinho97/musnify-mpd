@@ -1,5 +1,8 @@
 # coding: utf-8
-import ConfigParser
+try:
+    from ConfigParser import ConfigParser
+except ImportError:
+    from configparser import ConfigParser
 import json
 import os
 import sys
@@ -22,14 +25,14 @@ if not os.path.isfile(configFile):
     print("Loading default config")
     configFile = "/etc/musnify-mpd.config"
 
-config = ConfigParser.ConfigParser()
+config = ConfigParser()
 config.read(configFile)
 
-host = config.get("mpd","host")
-port = config.get("mpd","port")
+host = config.get("mpd","host", fallback=os.environ.get("MPD_HOST", "localhost"))
+port = config.get("mpd","port", fallback=os.environ.get("MPD_PORT", 6600))
 if config.has_option("apiKey", "lastfm"):
     apiKey = config.get("apiKey", "lastfm")
-musicLibrary = os.path.expanduser(config.get("mpd","musiclibrary")) + "/"
+musicLibrary = os.path.expanduser(config.get("mpd","musiclibrary", fallback='~/Music')) + "/"
 
 debug = False
 
@@ -65,6 +68,9 @@ class MPDWrapper:
 
     def getStatus(self):
         return self.client.status()["state"]
+    
+    def waitForChange(self):
+        return self.client.idle("player")
 
 
 class NotificationWrapper:
@@ -131,11 +137,14 @@ class CoverArt:
     @staticmethod
     def fetchLocalCover(path):
         regex = re.compile(r'(album|cover|\.?folder|front).*\.(gif|jpeg|jpg|png)$', re.I | re.X)
-        for e in os.listdir(path):
-            if regex.match(e) != None:
-                if debug:
-                    print("local cover found at " + path + e)
-                return Pixbuf.new_from_file(path + e)
+        try:
+            for e in os.listdir(path):
+                if regex.match(e) != None:
+                    if debug:
+                        print("local cover found at " + path + e)
+                    return Pixbuf.new_from_file(path + e)
+        except:
+            pass
         if debug:
             print("Nothing found on local directory")
         return False
@@ -152,7 +161,6 @@ class Musnify(object):
         song = ""
 
         while True:
-            time.sleep(0.5)
             actualStatus = mpd.getStatus()
             actualSong = mpd.getCurrentSong()
 
@@ -170,6 +178,8 @@ class Musnify(object):
                 self.handle(song)
                 if debug:
                     print(song)
+            
+            mpd.waitForChange()
 
     def handle(self, song):
         localCoverPath = CoverArt.fetchLocalCover(musicLibrary + self._separa(song["file"]))
@@ -207,21 +217,23 @@ def help():
   -d\t\tRun with debug mode enabled
          """)
 
-for i in range(len(sys.argv)):
-    if sys.argv[i] == "-h":
-        host = sys.argv[i + 1]
-    if sys.argv[i] == "-p":
-        port = sys.argv[i + 1]
-    if sys.argv[i] == "-d":
-        debug = True
-    if sys.argv[i] == "--help":
-        help()
-        exit()
-
 if __name__ == "__main__":
+    for i in range(len(sys.argv)):
+        if sys.argv[i] == "-h":
+            host = sys.argv[i + 1]
+        if sys.argv[i] == "-p":
+            port = sys.argv[i + 1]
+        if sys.argv[i] == "-d":
+            debug = True
+        if sys.argv[i] == "--help":
+            help()
+            exit()
+    
     musnify = Musnify()
 
     try:
         musnify.start()
+    except KeyboardInterrupt:
+        pass
     finally:
         musnify.stop()
