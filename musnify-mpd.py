@@ -28,20 +28,23 @@ if not os.path.isfile(configFile):
 config = ConfigParser()
 config.read(configFile)
 
-host = config.get("mpd","host", fallback=os.environ.get("MPD_HOST", "localhost"))
-port = config.get("mpd","port", fallback=os.environ.get("MPD_PORT", 6600))
+host = config.get("mpd", "host", fallback=os.environ.get("MPD_HOST", "localhost"))
+port = config.get("mpd", "port", fallback=os.environ.get("MPD_PORT", 6600))
+password = config.get("mpd", "password", fallback=os.environ.get("MPD_PASSWORD", 6600))
 if config.has_option("apiKey", "lastfm"):
     apiKey = config.get("apiKey", "lastfm")
-musicLibrary = os.path.expanduser(config.get("mpd","musiclibrary", fallback='~/Music')) + "/"
+musicLibrary = os.path.expanduser(config.get("mpd", "musiclibrary", fallback='~/Music')) + "/"
 
 debug = False
 
 class MPDWrapper:
-    def __init__(self, host="localhost", port="6600"):
+    def __init__(self, host="localhost", port="6600", password=None):
         self.client = MPDClient()
         self.client.timeout = 1
         self.client.idletimeout = None
         self.client.connect(host, port)
+        if password:
+            self.client.password(password)
 
     def getCurrentSong(self):
         song = self.client.currentsong()
@@ -76,14 +79,14 @@ class MPDWrapper:
 class NotificationWrapper:
     def __init__(self):
         Notify.init("musnify-mpd")
-        self.notification = Notify.Notification.new("Initializing Musnify..")
+        self.notification = Notify.Notification.new("Initializing Musnify...")
 
     def notify(self, artist, album, title, cover):
         self.notification.clear_hints()
         if cover == None:
             self.notification.update(title, ("by " + artist + "\n" + album).replace("&", "&amp;"), "music")
         else:
-            self.notification.update(title, ("by " + artist + "\n" + album).replace("&","&amp;"))
+            self.notification.update(title, ("by " + artist + "\n" + album).replace("&", "&amp;"))
             self.notification.set_image_from_pixbuf(cover)
         self.notification.show()
 
@@ -155,7 +158,7 @@ class Musnify(object):
         self.lastfmCoverPath = "/tmp/musnifyCurrentCover.png"
 
     def start(self):
-        mpd = MPDWrapper(host, port)
+        mpd = MPDWrapper(host, port, password)
 
         status = ""
         song = ""
@@ -214,6 +217,7 @@ def help():
   --help\tShow this help and exit
   -h\t\tSpecify your MPD host (default: localhost)
   -p\t\tSpecify your MPD port (default: 6600)
+  -x\t\tSpecify your MPD password (empty by default)
   -d\t\tRun with debug mode enabled
          """)
 
@@ -223,6 +227,8 @@ if __name__ == "__main__":
             host = sys.argv[i + 1]
         if sys.argv[i] == "-p":
             port = sys.argv[i + 1]
+        if sys.argv[i] == "-x":
+            password = sys.argv[i + 1]
         if sys.argv[i] == "-d":
             debug = True
         if sys.argv[i] == "--help":
