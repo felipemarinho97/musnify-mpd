@@ -88,7 +88,12 @@ class NotificationWrapper:
         else:
             self.notification.update(title, ("by " + artist + "\n" + album).replace("&", "&amp;"))
             self.notification.set_image_from_pixbuf(cover)
-        self.notification.show()
+        self.notification.close()
+        try:
+            self.notification.show()
+        except GLib.Error as e:
+            if self.debug:
+                print(f"Error showing notification: {e.message}", file=sys.stderr)
 
     def notifyStatus(self, status):
         self.notification.clear_hints()
@@ -96,7 +101,12 @@ class NotificationWrapper:
             self.notification.update("MPD Paused",icon="music")
         elif status == "stop":
             self.notification.update("MPD Stopped",icon="music")
-        self.notification.show()
+        self.notification.close()
+        try:
+            self.notification.show()
+        except GLib.Error as e:
+            if self.debug:
+                print(f"Error showing notification: {e.message}", file=sys.stderr)
 
 
 class CoverArt:
