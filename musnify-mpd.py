@@ -182,16 +182,22 @@ class Musnify(object):
 
                 if actualStatus == "play":
                     song = mpd.getCurrentSong()
-                    self.handle(song)
+                    try:
+                        self.handle(song)
+                    except Exception as e:
+                        if debug:
+                            print(f"Error handling song: {e}", file=sys.stderr)
                 else:
                     self.nw.notifyStatus(status)
-
             if (song != actualSong) and status != "stop":
                 song = mpd.getCurrentSong()
-                self.handle(song)
+                try:
+                    self.handle(song)
+                except Exception as e:
+                    if debug:
+                        print(f"Error handling song: {e}", file=sys.stderr)
                 if debug:
                     print(song)
-            
             mpd.waitForChange()
 
     def handle(self, song):
