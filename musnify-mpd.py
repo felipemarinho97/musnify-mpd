@@ -37,6 +37,9 @@ musicLibrary = os.path.expanduser(config.get("mpd", "musiclibrary", fallback='~/
 
 debug = False
 
+def _normalize_tag(value):
+    return ", ".join(value) if isinstance(value, list) else value
+
 class MPDWrapper:
     def __init__(self, host="localhost", port="6600", password=None):
         self.client = MPDClient()
@@ -50,17 +53,17 @@ class MPDWrapper:
         song = self.client.currentsong()
 
         try:
-            artist = song["artist"]
+            song["artist"] = _normalize_tag(song["artist"])
         except KeyError:
             song["artist"] = "Unknown Artist"
 
         try:
-            album = song["album"]
+            song["album"] = _normalize_tag(song["album"])
         except KeyError:
             song["album"] = "Unknown Album"
 
         try:
-            title = song["title"]
+            song["title"] = _normalize_tag(song["title"])
         except KeyError:
             try:
                 song["title"] = song["file"].split("/")[-1]
