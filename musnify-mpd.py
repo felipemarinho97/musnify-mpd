@@ -37,6 +37,9 @@ musicLibrary = os.path.expanduser(config.get("mpd", "musiclibrary", fallback='~/
 
 debug = False
 
+def _normalize_tag(value):
+    return ", ".join(value) if isinstance(value, list) else value
+
 class MPDWrapper:
     def __init__(self, host="localhost", port="6600", password=None):
         self.client = MPDClient()
@@ -50,17 +53,17 @@ class MPDWrapper:
         song = self.client.currentsong()
 
         try:
-            artist = song["artist"]
+            song["artist"] = _normalize_tag(song["artist"])
         except KeyError:
             song["artist"] = "Unknown Artist"
 
         try:
-            album = song["album"]
+            song["album"] = _normalize_tag(song["album"])
         except KeyError:
             song["album"] = "Unknown Album"
 
         try:
-            title = song["title"]
+            song["title"] = _normalize_tag(song["title"])
         except KeyError:
             try:
                 song["title"] = song["file"].split("/")[-1]
@@ -88,7 +91,12 @@ class NotificationWrapper:
         else:
             self.notification.update(title, ("by " + artist + "\n" + album).replace("&", "&amp;"))
             self.notification.set_image_from_pixbuf(cover)
-        self.notification.show()
+        self.notification.close()
+        try:
+            self.notification.show()
+        except GLib.Error as e:
+            if self.debug:
+                print(f"Error showing notification: {e.message}", file=sys.stderr)
 
     def notifyStatus(self, status):
         self.notification.clear_hints()
@@ -96,7 +104,12 @@ class NotificationWrapper:
             self.notification.update("MPD Paused",icon="music")
         elif status == "stop":
             self.notification.update("MPD Stopped",icon="music")
-        self.notification.show()
+        self.notification.close()
+        try:
+            self.notification.show()
+        except GLib.Error as e:
+            if self.debug:
+                print(f"Error showing notification: {e.message}", file=sys.stderr)
 
 
 class CoverArt:
@@ -172,16 +185,22 @@ class Musnify(object):
 
                 if actualStatus == "play":
                     song = mpd.getCurrentSong()
-                    self.handle(song)
+                    try:
+                        self.handle(song)
+                    except Exception as e:
+                        if debug:
+                            print(f"Error handling song: {e}", file=sys.stderr)
                 else:
                     self.nw.notifyStatus(status)
-
             if (song != actualSong) and status != "stop":
                 song = mpd.getCurrentSong()
-                self.handle(song)
+                try:
+                    self.handle(song)
+                except Exception as e:
+                    if debug:
+                        print(f"Error handling song: {e}", file=sys.stderr)
                 if debug:
                     print(song)
-            
             mpd.waitForChange()
 
     def handle(self, song):
